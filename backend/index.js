@@ -27,6 +27,21 @@ app.get('/', (req, res) => {
     res.render('index');
 })
 
+// 진행상황을 알려주기 위한 변수
+let object = {
+    "tenant": [
+        {"workspace": false},
+        {"init": false},
+        {"vpc": false},
+        {"igw": false},
+        {"Error": false},
+    ]
+}
+
+let processes = new Map(); // Use a map to store the child processes
+let nextId = 1; // Initial ID for the first spawned process
+
+
 // 클라이언트 연결 시 처리
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -53,6 +68,36 @@ io.on('connection', (socket) => {
             terraformProcess.stdout.on('data', (data) => {
                 const message = data.toString().trim(); // 문자열 앞뒤 공백 제거
                 console.log(message)
+
+                // 'u001b' - 유니코드 이스케이프 문자열 일괄 교체
+                const cleanedMessage = message.replace(/\u001b\[.*?m/g, '');
+
+                // 문자열 모음 배열
+                const stringArray = {
+                    1: `Created and switched to workspace "${tenant}"!`,
+                    2: `Terraform has been successfully initialized!`,
+                    3: `module.dummy_module.aws_vpc.vpc: Creation complete`,
+                    4: `module.dummy_module.aws_internet_gateway.internet_gateway: Creation complete`
+                }
+
+                if(cleanedMessage.includes(stringArray["1"])){
+                    console.log("success tenant");
+                    // Object의 workspace update
+                    object.tenant[0].workspace = true;
+                }
+                if(cleanedMessage.includes(stringArray["2"])){
+                    console.log("terraform init");
+                    object.tenant[1].init = true;
+                }
+                if(cleanedMessage.includes(stringArray["3"])){
+                    console.log("success VPC");
+                    object.tenant[2].vpc = true;
+                }
+                if(cleanedMessage.includes(stringArray["4"])){
+                    console.log("success igw");
+                    object.tenant[3].igw = true;
+                }
+                io.emit('message', JSON.stringify(object) );
             });
         }catch (e) {
 

@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,17 +13,41 @@
 </head>
 <body>
 
+
 <div class="container">
     <h1>TEST</h1>
     <div>
         <input
-            type="text"
-            id="message"
-            placeholder="tenant"
-            style="width: 200px"
+                type="text"
+                id="message"
+                placeholder="tenant"
+                style="width: 200px"
         />
         <button onClick="sendMessage()">Button</button>
     </div>
+    <!-- Progress Bar -->
+    <div class="progress pb-5">
+        <div class="circle">
+            <span class="label">1</span>
+            <div class="title" id="firstName">Terraform workspace</div>
+        </div>
+        <span class="bar"></span>
+        <div class="circle">
+            <span class="label">2</span>
+            <div class="title" id="secondName">Terraform initialized</div>
+        </div>
+        <span class="bar"></span>
+        <div class="circle">
+            <span class="label">3</span>
+            <div class="title" id="thirdName">created VPC</div>
+        </div>
+        <span class="bar"></span>
+        <div class="circle">
+            <span class="label">4</span>
+            <div class="title" id="fourthName">created igw</div>
+        </div>
+    </div>
+
     <div id="chat-log" class="pt-2"></div>
 </div>
 
@@ -49,6 +74,7 @@
 
         if(message !== undefined){
             socket.emit('message', message);
+            // console.log(message)
             // localStorage에 Data 저장
             window.localStorage.setItem('message', message);
         }
@@ -70,9 +96,55 @@
         const chat = document.createElement("div");
         const message = document.createTextNode(data);
         chat.appendChild(message);
+        // console.log(data)
 
         let parse = JSON.parse(data)
         console.log(parse)
+
+        if(parse.tenant[0].workspace === true){
+            $('.progress .circle:nth-of-type(' + 2 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 1 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 1 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 1 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 0 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[1].init === true){
+            $('.progress .circle:nth-of-type(' + 3 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 1 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 2 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 2 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 1 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[2].vpc === true){
+            $('.progress .circle:nth-of-type(' + 4 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 3 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 3 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 3 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[3].igw === true){
+            $('.progress .circle:nth-of-type(' + 5 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 4 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 4 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 4 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 3 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[4].Error === true){
+            const chatLog = document.getElementById("chat-log")
+            const onSpan = document.createElement('span')
+            onSpan.innerHTML = "Error"
+            chatLog.appendChild(onSpan)
+        }
+        // console.log(parse)
+
+        // 기존의 프로그레스 바 및 상태 업데이트 코드를 여기에 추가
     });
 </script>
 <style>
