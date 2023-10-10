@@ -1,12 +1,245 @@
-<!DOCTYPE html>
-<html lang="ko">
+
+<!doctype html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>index</title>
+    <title>Document</title>
+
+    <link rel="shortcut icon" href="#">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 </head>
 <body>
-    <h1>Hello World</h1>
+
+
+<div class="container">
+    <h1>TEST</h1>
+    <div>
+        <input
+                type="text"
+                id="message"
+                placeholder="tenant"
+                style="width: 200px"
+        />
+        <button onClick="sendMessage()">Button</button>
+    </div>
+    <!-- Progress Bar -->
+    <div class="progress pb-5">
+        <div class="circle">
+            <span class="label">1</span>
+            <div class="title" id="firstName">Terraform workspace</div>
+        </div>
+        <span class="bar"></span>
+        <div class="circle">
+            <span class="label">2</span>
+            <div class="title" id="secondName">Terraform initialized</div>
+        </div>
+        <span class="bar"></span>
+        <div class="circle">
+            <span class="label">3</span>
+            <div class="title" id="thirdName">created VPC</div>
+        </div>
+        <span class="bar"></span>
+        <div class="circle">
+            <span class="label">4</span>
+            <div class="title" id="fourthName">created igw</div>
+        </div>
+    </div>
+
+    <div id="chat-log" class="pt-2"></div>
+</div>
+
 </body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+
+<script>
+    const socket = io();
+    function init() {
+        const message = document.getElementById("message")
+        // localStorage로부터 Data 읽기
+        const localStorageData = window.localStorage.getItem('message')
+        // Id가 message인 value에 localStorage에 Data가 있으면 Data 없으면 빈칸 표시
+        message.value = localStorageData || ""
+    }
+
+    function sendMessage() {
+        const message = document.getElementById("message").value
+
+        if(message !== undefined){
+            socket.emit('message', message);
+            // console.log(message)
+            // localStorage에 Data 저장
+            window.localStorage.setItem('message', message);
+        }
+    }
+
+    socket.on('connect', () => {
+        console.log('connected to server');
+        init()
+        sendMessage()
+    });
+
+    socket.on('disconnect', () => {
+        console.log('disconnected from server');
+        window.localStorage.removeItem('message');
+    });
+
+    socket.on('message', (data) => {
+        // 서버로부터 메시지 수신 시 실행할 코드
+        const chat = document.createElement("div");
+        const message = document.createTextNode(data);
+        chat.appendChild(message);
+        // console.log(data)
+
+        let parse = JSON.parse(data)
+        console.log(parse)
+
+        if(parse.tenant[0].workspace === true){
+            $('.progress .circle:nth-of-type(' + 2 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 1 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 1 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 1 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 0 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[1].init === true){
+            $('.progress .circle:nth-of-type(' + 3 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 1 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 2 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 2 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 1 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[2].vpc === true){
+            $('.progress .circle:nth-of-type(' + 4 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 3 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 3 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 3 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[3].igw === true){
+            $('.progress .circle:nth-of-type(' + 5 + ')').addClass('active');
+            $('.progress .circle:nth-of-type(' + 2 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 4 + ')').removeClass('active').addClass('done');
+            $('.progress .circle:nth-of-type(' + 4 + ') .label').html('&#10003;');
+
+            $('.progress .bar:nth-of-type(' + 4 + ')').addClass('active');
+            $('.progress .bar:nth-of-type(' + 3 + ')').removeClass('active').addClass('done');
+        }
+        if(parse.tenant[4].Error === true){
+            const chatLog = document.getElementById("chat-log")
+            const onSpan = document.createElement('span')
+            onSpan.innerHTML = "Error"
+            chatLog.appendChild(onSpan)
+        }
+        // console.log(parse)
+
+        // 기존의 프로그레스 바 및 상태 업데이트 코드를 여기에 추가
+    });
+</script>
+<style>
+    *, *:after, *:before {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        /*font-family: "Open Sans";*/
+    }
+
+    /* Form Progress */
+    .progress {
+        /*width: 1000px;*/
+        height: max-content;
+        margin: 20px auto;
+        text-align: center;
+        background-color: #ffffff;
+        overflow: visible;
+    }
+    .progress .circle,
+    .progress .bar {
+        display: inline-block;
+        background: #fff;
+        width: 40px; height: 40px;
+        border-radius: 6px;
+        border: 1px solid #d5d5da;
+    }
+    .progress .bar {
+        position: relative;
+        width: 80px;
+        height: 6px;
+        top: 16px;
+        /*margin-left: -5px;*/
+        /*margin-right: -5px;*/
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+    }
+    .progress .circle .label {
+        display: inline-block;
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        border-radius: 6px;
+        margin-top: 3px;
+        color: #b5b5ba;
+        font-size: 17px;
+        /*margin-right: 4px;*/
+    }
+
+    .progress .circle .title {
+        color: #b5b5ba;
+        font-size: 13px;
+        line-height: 20px;
+        margin-left: -5px;
+        margin-top: 10px;
+    }
+
+    /* Done / Active */
+    .progress .bar.done{
+        background: #FECD44;
+        border: 1px solid #FECD44;
+    }
+
+    .progress .circle.done {
+        /*background: #eee;*/
+        border: 1px solid #FECD44;
+    }
+
+    .progress .bar.active {
+        background: linear-gradient(to right, #FECD44 40%, #FFF 60%);
+        border: 1px solid #FECD44;
+    }
+    .progress .circle.done .label {
+        color: #FFF;
+        background: #FECD44;
+        /*box-shadow: inset 0 0 2px rgba(0,0,0,.2);*/
+    }
+    .progress .circle.done .title {
+        color: #444;
+    }
+
+    .progress .circle.active {
+        /*background: #eee;*/
+        border: 1px solid #FB7671;
+    }
+
+    .progress .circle.active .label {
+        color: #FFF;
+        background: #FB7671;
+        /*box-shadow: inset 0 0 2px rgba(0,0,0,.2);*/
+    }
+    .progress .circle.active .title {
+        color: #FB7671;
+    }
+</style>
+
 </html>
